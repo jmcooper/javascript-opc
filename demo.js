@@ -1,3 +1,3 @@
 'use strict';
 
-display('hello world!!!')
+display('hello world!!!');
