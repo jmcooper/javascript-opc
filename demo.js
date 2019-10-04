@@ -1,3 +1,6 @@
-'use strict';
+'use strict'; 
+(function() {
 
-display('Hello, world!!!');
+  
+
+})();

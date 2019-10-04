@@ -10,6 +10,12 @@ window.display = function () {
   domActionBuffer.push({ action: 'display', arguments: arguments });
 };
 
+window.displayRegexArray = function () {
+  if (!flushTimeout) flushTimeout = setTimeout(flushDomQueue, 100);
+
+  domActionBuffer.push({ action: 'displayRegexArray', arguments: arguments });
+};
+
 window.clearDisplay = function () {
   if (!flushTimeout) flushTimeout = setTimeout(flushDomQueue, 100);
 
@@ -25,9 +31,13 @@ function doClearDisplay() {
 
 function doDisplay() {
   for (var i = 0; i < arguments.length; i++) {
-    if (typeof arguments[i] === 'object') displayObject(arguments[i]);
+    if (typeof arguments[i] === 'object') displayObject(arguments[i], false);
     else displayValue(arguments[i], true);
   }
+}
+
+function doDisplayRegexArray() {
+  displayObject(arguments[0], true)
 }
 
 function flushDomQueue() {
@@ -41,6 +51,9 @@ function flushDomQueue() {
     switch (domAction.action) {
       case 'display':
         doDisplay(...domAction.arguments);
+        break;
+      case 'displayRegexArray':
+        doDisplayRegexArray(...domAction.arguments);
         break;
       case 'clearDisplay':
         doClearDisplay();
@@ -59,12 +72,36 @@ function displayValue(value, addMargin, addPadding) {
   outputTag.appendChild(div);
 }
 
-function displayObject(object) {
+function displayObject(object, regexArray) {
   if (object == null) return displayValue('null');
+  if (getTypeName(object) === 'Array' && !regexArray) {
+    let appendedArrayValues = object.reduce((acc, cur) => acc+=cur+',', '')
+    if (appendedArrayValues.length > 0)
+      appendedArrayValues = appendedArrayValues.substr(0, appendedArrayValues.length - 1)
+    displayValue('[' + appendedArrayValues  + ']')
+    if (Object.keys(object).length > object.length) {
+      displayValue('&nbsp;')
+      displayValue('Additional array properties:')
+    }
+    for (let propertyName in object)
+    {
+      if (!Number.isInteger(+propertyName) && object[propertyName] !== undefined) 
+        displayValue('&nbsp;&nbsp;' + propertyName + ": " + object[propertyName])
+      else if (typeof object[propertyName] === 'object', false) {
+        return displayObject()
+      }
+    }
+    return
+  }
+
   displayValue(getTypeName(object) + ' {');
   for (var propertyName in object) {
-    if (propertyName != 'constructor') {
-      displayValue(propertyName + ': ' + object[propertyName], false, true);
+    if (typeof object[propertyName] === 'object', false) 
+      displayObject(object[propertyName])
+    else if (propertyName != 'constructor' && (!regexArray || object[propertyName] !== undefined)) {
+      let prefix = Number.isInteger(+propertyName) && regexArray ? '[' : ''
+      let suffix = Number.isInteger(+propertyName) && regexArray ? ']' : ''
+      displayValue(prefix + propertyName + suffix + ': ' + object[propertyName], false, true);
     }
   }
   displayValue('}', true);
