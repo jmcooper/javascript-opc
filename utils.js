@@ -108,9 +108,7 @@ function displayObject(object, regexArray) {
 }
 
 function getTypeName(object) {
-  var funcNameRegex = /function (.{1,})\(/;
-  var results = funcNameRegex.exec(object.constructor.toString());
-  return results && results.length > 1 ? results[1] : '';
+  return object.constructor.name;
 }
 
 let reloadJS = () => {
